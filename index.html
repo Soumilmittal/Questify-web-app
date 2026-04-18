@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QuestLog RPG V3.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f111a;--surface:#1c1f2e;--surface-light:#2a2e40;--primary:#6366f1;--primary-glow:rgba(99,102,241,0.4);--accent:#10b981;--danger:#ef4444;--gold:#f59e0b;--text-main:#f8fafc;--text-muted:#94a3b8;--glass:rgba(28,31,46,0.7);--border:rgba(255,255,255,0.08);--radius-lg:24px;--radius-md:16px;--shadow:0 10px 30px -10px rgba(0,0,0,0.5);}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;margin:0;}
+body{background-color:var(--bg);color:var(--text-main);font-family:'Outfit',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;background-image:radial-gradient(circle at 10% 20%,rgba(99,102,241,0.15) 0%,transparent 20%),radial-gradient(circle at 90% 80%,rgba(245,158,11,0.1) 0%,transparent 20%);}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(600px) rotate(720deg);opacity:0}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+header{padding:16px 20px 10px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);z-index:50;flex-shrink:0;}
+.profile-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.user-info{display:flex;align-items:center;gap:14px;}
+.avatar{width:52px;height:52px;background:linear-gradient(135deg,var(--primary),#a855f7);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 15px var(--primary-glow);animation:float 4s ease-in-out infinite;flex-shrink:0;}
+.stats{flex:1;}
+.stats h1{font-size:1.2rem;font-weight:700;margin:0;line-height:1.2;}
+.stats p{margin:0;color:var(--text-muted);font-size:0.8rem;}
+.edit-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.9rem;padding:0 4px;}
+.gold-pill{background:rgba(245,158,11,0.15);color:var(--gold);padding:6px 14px;border-radius:50px;font-weight:600;display:flex;align-items:center;gap:6px;font-size:0.9rem;border:1px solid rgba(245,158,11,0.3);white-space:nowrap;}
+.bars{display:flex;flex-direction:column;gap:6px;}
+.bar-track{height:8px;background:var(--surface-light);border-radius:10px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:10px;width:0%;transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1);}
+.xp-fill{background:linear-gradient(90deg,var(--primary),#818cf8);box-shadow:0 0 10px var(--primary-glow);}
+.hp-fill{background:linear-gradient(90deg,#ef4444,#f87171);}
+.bar-label{display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-bottom:3px;font-weight:600;}
+.streak-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.2);color:var(--gold);font-size:0.72rem;font-weight:600;padding:2px 8px;border-radius:20px;margin-top:2px;}
+main{flex:1;overflow-y:auto;padding:16px;padding-bottom:105px;scroll-behavior:smooth;}
+main::-webkit-scrollbar{width:4px;}
+main::-webkit-scrollbar-thumb{background:var(--surface-light);border-radius:4px;}
+section{display:none;animation:fadeIn 0.3s ease;}
+section.active{display:block;}
+.input-wrapper{background:var(--surface);padding:8px;border-radius:var(--radius-lg);display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:20px;}
+.input-row{display:flex;gap:8px;width:100%;}
+input[type="text"],input[type="date"],input[type="time"]{background:#121214;border:1px solid var(--border);color:white;padding:11px 12px;border-radius:12px;font-family:inherit;outline:none;width:100%;font-size:0.9rem;}
+input[type="text"]::placeholder{color:var(--text-muted);}
+::-webkit-calendar-picker-indicator{filter:invert(1);opacity:0.6;cursor:pointer;}
+select#quest-diff{background:#121214;color:white;border:1px solid var(--border);padding:10px 8px;border-radius:12px;font-family:inherit;font-size:0.85rem;outline:none;flex-shrink:0;width:90px;}
+.add-btn{background:var(--primary);color:white;height:46px;border-radius:14px;border:none;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 12px var(--primary-glow);display:flex;align-items:center;justify-content:center;gap:6px;transition:transform 0.1s;}
+.add-btn:active{transform:scale(0.97);}
+.section-title{font-size:0.75rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:0 0 12px;}
+.quest-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;}
+.quest-card{background:var(--surface);padding:16px 16px 16px 22px;border-radius:var(--radius-lg);border:1px solid var(--border);position:relative;overflow:hidden;animation:slideUp 0.35s ease forwards;}
+.quest-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;}
+.diff-easy::before{background:var(--accent);}
+.diff-medium::before{background:var(--primary);}
+.diff-hard::before{background:var(--danger);}
+.q-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.q-title{font-weight:600;font-size:1rem;flex:1;padding-right:8px;word-break:break-word;}
+.date-badge{background:rgba(255,255,255,0.05);color:var(--text-muted);font-size:0.72rem;padding:3px 8px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;margin-bottom:7px;width:fit-content;}
+.date-badge.overdue{color:var(--danger);border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.1);}
+.q-rewards{font-size:0.78rem;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;}
+.tag{padding:2px 8px;border-radius:6px;background:rgba(255,255,255,0.05);}
+.tag.easy{color:var(--accent);}
+.tag.medium{color:var(--primary);}
+.tag.hard{color:var(--danger);}
+.q-actions{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.action-group{display:flex;align-items:center;gap:8px;}
+.icon-btn{background:none;border:none;color:var(--text-muted);font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:8px;transition:background 0.2s;}
+.icon-btn:hover{background:var(--surface-light);color:var(--text-main);}
+.icon-btn.cal{color:var(--primary);}
+.icon-btn.del{color:var(--danger);}
+.check-btn{width:38px;height:38px;border-radius:12px;border:2px solid var(--surface-light);background:transparent;color:var(--text-muted);font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+.check-btn:hover{border-color:var(--accent);color:var(--accent);}
+.check-btn.done{border-color:var(--accent);color:var(--accent);background:rgba(16,185,129,0.1);}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);z-index:200;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeIn 0.2s;}
+.modal{background:var(--surface);width:90%;max-width:380px;padding:22px;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);}
+.modal h2{margin:0 0 18px;font-size:1.2rem;}
+.form-group{margin-bottom:13px;}
+.form-group label{display:block;margin-bottom:6px;font-size:0.85rem;color:var(--text-muted);}
+.btn-primary{width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:12px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;font-size:0.95rem;}
+.btn-secondary{width:100%;padding:13px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:12px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;font-size:0.95rem;}
+nav{position:fixed;bottom:0;left:0;width:100%;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:10px 20px 16px;display:flex;justify-content:space-around;z-index:100;}
+.nav-btn{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--text-muted);font-size:0.72rem;font-weight:600;cursor:pointer;transition:color 0.3s;width:60px;font-family:inherit;}
+.nav-icon{font-size:1.4rem;transition:transform 0.3s;}
+.nav-btn.active{color:var(--primary);}
+.nav-btn.active .nav-icon{transform:translateY(-3px);}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-100px);background:rgba(255,255,255,0.95);color:#111;padding:11px 22px;border-radius:50px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.5);z-index:300;transition:transform 0.4s;display:flex;align-items:center;gap:8px;font-size:0.9rem;white-space:nowrap;max-width:90vw;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px;}
+.shop-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 12px;text-align:center;}
+.shop-icon{font-size:2rem;margin-bottom:8px;display:block;}
+.shop-name{font-weight:600;font-size:0.95rem;}
+.shop-desc{color:var(--text-muted);font-size:0.72rem;margin:4px 0;}
+.shop-price{color:var(--gold);font-weight:700;margin:6px 0;font-size:0.95rem;}
+.buy-btn{width:100%;margin-top:8px;padding:8px;background:var(--surface-light);color:white;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;font-size:0.85rem;transition:background 0.2s;}
+.buy-btn:hover{background:var(--primary);}
+textarea#codex{width:100%;height:56vh;background:#151822;border:1px solid var(--border);color:white;padding:14px;border-radius:var(--radius-lg);resize:none;font-family:monospace;font-size:0.9rem;outline:none;}
+#level-up-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,17,26,0.97);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
+.level-badge-giant{font-size:4.5rem;font-weight:800;color:var(--gold);text-shadow:0 0 40px rgba(245,158,11,0.6);animation:pulse 1s ease-in-out infinite;}
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;animation:confettiFall linear forwards;pointer-events:none;z-index:500;}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;text-align:center;}
+.stat-val{font-size:1.8rem;font-weight:700;color:var(--text-main);}
+.stat-label{font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);}
+.empty-state .empty-icon{font-size:3rem;margin-bottom:12px;}
+.progress-ring{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="profile-header">
+    <div class="user-info">
+      <div class="avatar">⚔️</div>
+      <div class="stats">
+        <h1 id="display-name">Hero <button class="edit-btn" onclick="openProfileModal()">✏️</button></h1>
+        <p>Lv.<span id="display-level">1</span> &bull; <span id="display-rank">Novice</span></p>
+        <div class="streak-badge" id="streak-badge">🔥 0 day streak</div>
+      </div>
+    </div>
+    <div class="gold-pill">💰 <span id="gold-display">0</span></div>
+  </div>
+  <div class="bars">
+    <div class="bar-label"><span>❤️ HP</span><span id="hp-text">100/100</span></div>
+    <div class="bar-track"><div class="bar-fill hp-fill" id="hp-bar"></div></div>
+    <div class="bar-label" style="margin-top:4px"><span>⭐ XP</span><span id="xp-text">0/100</span></div>
+    <div class="bar-track"><div class="bar-fill xp-fill" id="xp-bar"></div></div>
+  </div>
+</header>
+
+<div class="toast" id="toast"><span id="toast-msg">Action complete</span></div>
+
+<div id="level-up-overlay">
+  <div style="font-size:1rem;color:var(--text-muted);font-weight:600;letter-spacing:0.1em;text-transform:uppercase;">Level Up!</div>
+  <div class="level-badge-giant">Level <span id="new-lvl">2</span></div>
+  <div style="color:var(--text-muted);font-size:0.9rem;" id="levelup-desc">+10 Max HP · HP Restored</div>
+  <button class="btn-primary" style="width:auto;padding:12px 32px;margin-top:16px;" onclick="closeLevelUp()">Continue ⚔️</button>
+</div>
+
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal">
+    <h2>Edit Profile</h2>
+    <div class="form-group">
+      <label>Hero Name</label>
+      <input type="text" id="edit-name" placeholder="Enter name..." style="background:#121214;border:1px solid var(--border);color:white;border-radius:12px;">
+    </div>
+    <div class="form-group">
+      <label>Rank / Title</label>
+      <input type="text" id="edit-rank" placeholder="Enter title..." style="background:#121214;border:1px solid var(--border);color:white;border-radius:12px;">
+    </div>
+    <div class="form-group">
+      <label>Avatar Emoji</label>
+      <input type="text" id="edit-avatar" placeholder="⚔️" maxlength="4" style="background:#121214;border:1px solid var(--border);color:white;border-radius:12px;">
+    </div>
+    <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+    <button class="btn-secondary" onclick="closeProfileModal()">Cancel</button>
+  </div>
+</div>
+
+<main>
+  <section id="view-quests" class="active">
+    <div class="input-wrapper">
+      <input type="text" id="quest-input" placeholder="What needs to be done?" onkeydown="if(event.key==='Enter')addQuest()">
+      <div class="input-row">
+        <select id="quest-diff">
+          <option value="easy">🟢 Easy</option>
+          <option value="medium" selected>🟣 Medium</option>
+          <option value="hard">🔴 Hard</option>
+        </select>
+        <input type="date" id="quest-date" style="flex:1;">
+        <input type="time" id="quest-time" style="flex:1;">
+      </div>
+      <button class="add-btn" onclick="addQuest()">+ Add Quest</button>
+    </div>
+    <div id="active-section">
+      <div class="section-title">Active Quests</div>
+      <ul class="quest-list" id="quest-list"></ul>
+      <div id="empty-quests" class="empty-state" style="display:none;">
+        <div class="empty-icon">🗺️</div>
+        <div>No active quests. Add one above!</div>
+      </div>
+    </div>
+    <div id="done-section" style="margin-top:24px;display:none;">
+      <div class="section-title">Completed</div>
+      <ul class="quest-list" id="done-list"></ul>
+    </div>
+  </section>
+
+  <section id="view-shop">
+    <div class="section-title" style="margin-bottom:16px;">Shop</div>
+    <div class="shop-grid">
+      <div class="shop-card"><span class="shop-icon">🧪</span><div class="shop-name">Potion</div><div class="shop-desc">Restore 30 HP</div><div class="shop-price">50 G</div><button class="buy-btn" onclick="buyItem('potion')">Buy</button></div>
+      <div class="shop-card"><span class="shop-icon">🧴</span><div class="shop-name">Elixir</div><div class="shop-desc">Full HP restore</div><div class="shop-price">150 G</div><button class="buy-btn" onclick="buyItem('elixir')">Buy</button></div>
+      <div class="shop-card"><span class="shop-icon">📜</span><div class="shop-name">XP Scroll</div><div class="shop-desc">+50 instant XP</div><div class="shop-price">100 G</div><button class="buy-btn" onclick="buyItem('xp')">Buy</button></div>
+      <div class="shop-card"><span class="shop-icon">⚔️</span><div class="shop-name">Upgrade</div><div class="shop-desc">+10 Max HP perm</div><div class="shop-price">200 G</div><button class="buy-btn" onclick="buyItem('upgrade')">Buy</button></div>
+      <div class="shop-card"><span class="shop-icon">🛡️</span><div class="shop-name">Shield</div><div class="shop-desc">+20 Max HP perm</div><div class="shop-price">350 G</div><button class="buy-btn" onclick="buyItem('shield')">Buy</button></div>
+      <div class="shop-card"><span class="shop-icon">💎</span><div class="shop-name">Gem</div><div class="shop-desc">+100 XP boost</div><div class="shop-price">180 G</div><button class="buy-btn" onclick="buyItem('gem')">Buy</button></div>
+    </div>
+  </section>
+
+  <section id="view-stats">
+    <div class="section-title" style="margin-bottom:16px;">Adventurer Stats</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-val" id="stat-completed">0</div><div class="stat-label">Quests Done</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-level">1</div><div class="stat-label">Level</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-streak">0</div><div class="stat-label">Day Streak 🔥</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-gold">0</div><div class="stat-label">Total Gold</div></div>
+    </div>
+    <div class="progress-ring">
+      <div style="flex:1;"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;">Next level in</div><div style="font-size:1.5rem;font-weight:700;" id="stat-xp-needed">100 XP</div></div>
+      <div style="text-align:right;"><div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;">Total XP earned</div><div style="font-size:1.5rem;font-weight:700;color:var(--primary);" id="stat-total-xp">0</div></div>
+    </div>
+    <div style="margin-top:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;">
+      <div style="font-size:0.8rem;color:var(--text-muted);font-weight:600;margin-bottom:12px;">Quest Breakdown</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="stat-breakdown"></div>
+    </div>
+  </section>
+
+  <section id="view-notes">
+    <div class="section-title" style="margin-bottom:8px;">Codex <span style="font-weight:400;font-size:0.7rem;margin-left:6px;" id="save-indicator"></span></div>
+    <textarea id="codex" placeholder="Write your notes, strategies, lore..."></textarea>
+  </section>
+
+  <section id="view-settings">
+    <div class="section-title" style="margin-bottom:16px;">System</div>
+    <button class="btn-secondary" style="margin-bottom:10px;" onclick="exportData()">⬇️ Export Save (.json)</button>
+    <div style="position:relative;margin-bottom:10px;">
+      <button class="btn-secondary" style="width:100%">⬆️ Import Save</button>
+      <input type="file" id="import-file" accept=".json" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;" onchange="importData(this)">
+    </div>
+    <button class="btn-secondary" style="margin-bottom:10px;" onclick="clearCompleted()">🗑️ Clear Completed Quests</button>
+    <button class="btn-secondary" style="border-color:var(--danger);color:var(--danger);" onclick="resetGame()">⚠️ Reset All Data</button>
+    <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;font-size:0.8rem;color:var(--text-muted);line-height:1.7;">
+      <b style="color:var(--text-main);">QuestLog RPG v3.2</b><br>
+      Developed by Soumil Mittal<br>
+      Fixed &amp; Enhanced Edition<br>
+      <span style="color:var(--accent);">✓ Persistent storage · ✓ HP decay · ✓ Streak tracking</span>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button class="nav-btn active" onclick="switchTab('quests',this)"><span class="nav-icon">⚔️</span>Quests</button>
+  <button class="nav-btn" onclick="switchTab('shop',this)"><span class="nav-icon">🛍️</span>Shop</button>
+  <button class="nav-btn" onclick="switchTab('stats',this)"><span class="nav-icon">📊</span>Stats</button>
+  <button class="nav-btn" onclick="switchTab('notes',this)"><span class="nav-icon">📜</span>Codex</button>
+  <button class="nav-btn" onclick="switchTab('settings',this)"><span class="nav-icon">⚙️</span>System</button>
+</nav>
+
+<script>
+const REWARDS={easy:{xp:15,gold:10},medium:{xp:30,gold:25},hard:{xp:60,gold:50}};
+const RANK_TITLES=['Novice','Apprentice','Adventurer','Veteran','Elite','Champion','Legend','Mythic'];
+
+const DEFAULT_STATE={
+  player:{name:'Hero',rank:'Novice',level:1,xp:0,maxXp:100,gold:0,hp:100,maxHp:100,avatar:'⚔️',streak:0,lastCompletedDate:'',totalXp:0,totalGold:0},
+  quests:[],
+  notes:'',
+  stats:{completed:0,easy:0,medium:0,hard:0}
+};
+
+let state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+let pendingLevelUp=false;
+
+function saveGame(){
+  state.notes=document.getElementById('codex').value;
+  try{ localStorage.setItem('questRPG_v32',JSON.stringify(state)); }catch(e){}
+}
+
+function loadGame(){
+  try{
+    const saved=localStorage.getItem('questRPG_v32');
+    if(saved){
+      const parsed=JSON.parse(saved);
+      state=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)),parsed);
+      state.player=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE.player)),parsed.player||{});
+      state.stats=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE.stats)),parsed.stats||{});
+      state.quests=parsed.quests||[];
+    }
+  }catch(e){}
+  document.getElementById('codex').value=state.notes||'';
+  applyHpDecay();
+  updateUI();
+}
+
+function applyHpDecay(){
+  const now=new Date();
+  state.quests.forEach(q=>{
+    if(q.completed||!q.date||q.decayApplied) return;
+    const due=new Date(q.date+'T'+(q.time||'23:59'));
+    if(due<now){
+      const dmg=q.diff==='hard'?20:q.diff==='medium'?10:5;
+      state.player.hp=Math.max(0,state.player.hp-dmg);
+      q.decayApplied=true;
+    }
+  });
+}
+
+function updateStreak(){
+  const today=new Date().toDateString();
+  if(state.player.lastCompletedDate===today) return;
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(state.player.lastCompletedDate===yesterday){
+    state.player.streak=(state.player.streak||0)+1;
+  } else {
+    state.player.streak=1;
+  }
+  state.player.lastCompletedDate=today;
+}
+
+function updateUI(){
+  const p=state.player;
+  document.getElementById('gold-display').innerText=p.gold;
+  document.getElementById('display-name').innerHTML=p.name+' <button class="edit-btn" onclick="openProfileModal()">✏️</button>';
+  document.getElementById('display-rank').innerText=p.rank;
+  document.getElementById('display-level').innerText=p.level;
+  document.getElementById('streak-badge').innerText='🔥 '+(p.streak||0)+' day streak';
+  document.querySelector('.avatar').innerText=p.avatar||'⚔️';
+  const xpPct=Math.min(100,(p.xp/p.maxXp)*100);
+  document.getElementById('xp-bar').style.width=xpPct+'%';
+  document.getElementById('xp-text').innerText=p.xp+'/'+p.maxXp;
+  const hpPct=Math.min(100,(p.hp/p.maxHp)*100);
+  document.getElementById('hp-bar').style.width=hpPct+'%';
+  document.getElementById('hp-text').innerText=Math.ceil(p.hp)+'/'+p.maxHp;
+  document.getElementById('stat-completed').innerText=state.stats.completed||0;
+  document.getElementById('stat-level').innerText=p.level;
+  document.getElementById('stat-streak').innerText=p.streak||0;
+  document.getElementById('stat-gold').innerText=p.totalGold||0;
+  document.getElementById('stat-xp-needed').innerText=(p.maxXp-p.xp)+' XP';
+  document.getElementById('stat-total-xp').innerText=p.totalXp||0;
+  document.getElementById('stat-breakdown').innerHTML=
+    '<div style="display:flex;justify-content:space-between;font-size:0.85rem;"><span style="color:var(--accent);">Easy</span><span>'+(state.stats.easy||0)+' completed</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:0.85rem;"><span style="color:var(--primary);">Medium</span><span>'+(state.stats.medium||0)+' completed</span></div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:0.85rem;"><span style="color:var(--danger);">Hard</span><span>'+(state.stats.hard||0)+' completed</span></div>';
+  renderQuests();
+}
+
+function renderQuests(){
+  const list=document.getElementById('quest-list');
+  const doneList=document.getElementById('done-list');
+  list.innerHTML='';
+  doneList.innerHTML='';
+  const now=new Date();
+  const active=state.quests.filter(q=>!q.completed);
+  const done=state.quests.filter(q=>q.completed);
+  document.getElementById('empty-quests').style.display=active.length===0?'block':'none';
+  document.getElementById('done-section').style.display=done.length>0?'block':'none';
+  active.forEach(q=>list.appendChild(buildCard(q,now,false)));
+  done.forEach(q=>doneList.appendChild(buildCard(q,now,true)));
+}
+
+function buildCard(q,now,completed){
+  const li=document.createElement('li');
+  li.className='quest-card diff-'+q.diff;
+  let dateHtml='';
+  if(q.date){
+    const due=new Date(q.date+'T'+(q.time||'23:59'));
+    const isOverdue=!q.completed&&due<now;
+    dateHtml='<div class="date-badge '+(isOverdue?'overdue':'')+'">'+(isOverdue?'⚠️ OVERDUE':'📅')+' '+q.date+(q.time?' @ '+q.time:'')+'</div>';
+  }
+  const checkHtml=completed
+    ?'<button class="check-btn done" title="Done">✔</button>'
+    :'<button class="check-btn" onclick="completeQuest('+q.id+')" title="Complete">✓</button>';
+  const calHtml=!completed&&q.date?'<button class="icon-btn cal" onclick="addToCalendar('+q.id+')">📅 Cal</button>':'';
+  li.innerHTML=
+    '<div class="q-header"><div class="q-title" style="'+(completed?'text-decoration:line-through;opacity:0.5':'')+'">'+q.title+'</div></div>'+
+    dateHtml+
+    '<div class="q-rewards"><span class="tag '+q.diff+'">'+q.diff.toUpperCase()+'</span><span class="tag">+'+REWARDS[q.diff].xp+' XP</span><span class="tag">+'+REWARDS[q.diff].gold+' G</span></div>'+
+    '<div class="q-actions"><div class="action-group">'+calHtml+'<button class="icon-btn del" onclick="deleteQuest('+q.id+')">🗑️</button></div>'+checkHtml+'</div>';
+  return li;
+}
+
+function addQuest(){
+  const title=document.getElementById('quest-input').value.trim();
+  if(!title){showToast('⚠️ Enter a quest name first.');return;}
+  const date=document.getElementById('quest-date').value;
+  const time=document.getElementById('quest-time').value;
+  const diff=document.getElementById('quest-diff').value;
+  state.quests.push({id:Date.now(),title,diff,date,time,completed:false,notifSent:false,decayApplied:false});
+  sortQuests();
+  document.getElementById('quest-input').value='';
+  document.getElementById('quest-date').value='';
+  document.getElementById('quest-time').value='';
+  saveGame();updateUI();showToast('✨ Quest added!');
+}
+
+function sortQuests(){
+  state.quests.sort((a,b)=>{
+    if(a.completed!==b.completed) return a.completed?1:-1;
+    if(!a.date&&!b.date) return b.id-a.id;
+    if(!a.date) return 1;
+    if(!b.date) return -1;
+    return new Date(a.date+'T'+(a.time||'00:00'))-new Date(b.date+'T'+(b.time||'00:00'));
+  });
+}
+
+function completeQuest(id){
+  const q=state.quests.find(x=>x.id===id);
+  if(!q||q.completed) return;
+  q.completed=true;q.completedAt=Date.now();
+  const r=REWARDS[q.diff];
+  state.player.xp+=r.xp;state.player.gold+=r.gold;
+  state.player.totalXp=(state.player.totalXp||0)+r.xp;
+  state.player.totalGold=(state.player.totalGold||0)+r.gold;
+  state.stats.completed=(state.stats.completed||0)+1;
+  state.stats[q.diff]=(state.stats[q.diff]||0)+1;
+  updateStreak();
+  showToast('🎉 +'+r.xp+' XP · +'+r.gold+' G · 🔥 '+state.player.streak+'d streak');
+  let leveled=false;
+  while(state.player.xp>=state.player.maxXp){levelUp();leveled=true;}
+  sortQuests();saveGame();updateUI();
+  if(leveled) triggerLevelUpScreen();
+}
+
+function deleteQuest(id){state.quests=state.quests.filter(x=>x.id!==id);saveGame();updateUI();}
+function clearCompleted(){if(!confirm('Remove all completed quests?'))return;state.quests=state.quests.filter(x=>!x.completed);saveGame();updateUI();showToast('🗑️ Cleared.');}
+
+function levelUp(){
+  state.player.xp-=state.player.maxXp;
+  state.player.level++;
+  state.player.maxXp=Math.floor(state.player.maxXp*1.25);
+  state.player.maxHp+=10;state.player.hp=state.player.maxHp;
+  state.player.rank=RANK_TITLES[Math.min(state.player.level-1,RANK_TITLES.length-1)];
+}
+
+function triggerLevelUpScreen(){
+  document.getElementById('new-lvl').innerText=state.player.level;
+  document.getElementById('levelup-desc').innerText='+10 Max HP · HP Restored · Rank: '+state.player.rank;
+  document.getElementById('level-up-overlay').style.display='flex';
+  spawnConfetti();
+}
+
+function closeLevelUp(){document.getElementById('level-up-overlay').style.display='none';updateUI();}
+
+function spawnConfetti(){
+  const colors=['#6366f1','#f59e0b','#10b981','#ef4444','#a855f7','#3b82f6'];
+  for(let i=0;i<50;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div');c.className='confetti-piece';
+      c.style.cssText='left:'+Math.random()*100+'vw;top:-10px;background:'+colors[Math.floor(Math.random()*colors.length)]+';transform:rotate('+Math.random()*360+'deg);animation-duration:'+(1.5+Math.random()*2)+'s;animation-delay:'+Math.random()*0.5+'s;';
+      document.body.appendChild(c);setTimeout(()=>c.remove(),3500);
+    },i*30);
+  }
+}
+
+function buyItem(type){
+  const p=state.player;
+  const costs={potion:50,elixir:150,xp:100,upgrade:200,shield:350,gem:180};
+  if(p.gold<costs[type]){showToast('💸 Not enough gold!');return;}
+  p.gold-=costs[type];
+  if(type==='potion'){p.hp=Math.min(p.maxHp,p.hp+30);showToast('🧪 +30 HP!');}
+  else if(type==='elixir'){p.hp=p.maxHp;showToast('🧴 Full HP restored!');}
+  else if(type==='xp'){p.xp+=50;p.totalXp=(p.totalXp||0)+50;if(p.xp>=p.maxXp){levelUp();triggerLevelUpScreen();}showToast('📜 +50 XP!');}
+  else if(type==='upgrade'){p.maxHp+=10;p.hp+=10;showToast('⚔️ Max HP +10!');}
+  else if(type==='shield'){p.maxHp+=20;p.hp+=20;showToast('🛡️ Max HP +20!');}
+  else if(type==='gem'){p.xp+=100;p.totalXp=(p.totalXp||0)+100;if(p.xp>=p.maxXp){levelUp();triggerLevelUpScreen();}showToast('💎 +100 XP!');}
+  saveGame();updateUI();
+}
+
+function addToCalendar(id){
+  const q=state.quests.find(x=>x.id===id);
+  if(!q||!q.date) return;
+  let ds=q.date.replace(/-/g,''),de=q.date.replace(/-/g,'');
+  if(q.time){ds+='T'+q.time.replace(':','')+'00';let[h,m]=q.time.split(':');de+='T'+String(parseInt(h)+1).padStart(2,'0')+m+'00';}
+  else{ds+='T090000';de+='T100000';}
+  const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//QuestLog//RPG//EN\r\nBEGIN:VEVENT\r\nUID:'+q.id+'@questlog.app\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z\r\nDTSTART:'+ds+'\r\nDTEND:'+de+'\r\nSUMMARY:'+q.title+'\r\nDESCRIPTION:Quest from QuestLog RPG\r\nEND:VEVENT\r\nEND:VCALENDAR';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'}));
+  a.download='quest_event.ics';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  showToast('📅 Calendar file downloaded!');
+}
+
+function requestNotificationPermission(){if('Notification' in window&&Notification.permission==='default') Notification.requestPermission();}
+
+function startReminderSystem(){
+  setInterval(()=>{
+    const cur=new Date().toISOString().slice(0,16);
+    state.quests.forEach(q=>{
+      if(q.completed||q.notifSent||!q.date||!q.time) return;
+      if(q.date+'T'+q.time===cur){
+        q.notifSent=true;
+        if(Notification.permission==='granted') new Notification('Quest Reminder! ⚔️',{body:'Time for: '+q.title});
+        showToast('🔔 ALARM: '+q.title);
+        try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=523.25;g.gain.value=0.08;o.start();setTimeout(()=>o.stop(),400);}catch(e){}
+        saveGame();
+      }
+    });
+  },30000);
+}
+
+function openProfileModal(){document.getElementById('edit-name').value=state.player.name;document.getElementById('edit-rank').value=state.player.rank;document.getElementById('edit-avatar').value=state.player.avatar||'⚔️';document.getElementById('profile-modal').classList.add('open');}
+function closeProfileModal(){document.getElementById('profile-modal').classList.remove('open');}
+function saveProfile(){
+  const name=document.getElementById('edit-name').value.trim();
+  const rank=document.getElementById('edit-rank').value.trim();
+  const avatar=document.getElementById('edit-avatar').value.trim();
+  if(name) state.player.name=name;
+  if(rank) state.player.rank=rank;
+  if(avatar) state.player.avatar=avatar;
+  saveGame();closeProfileModal();updateUI();showToast('✅ Profile updated!');
+}
+
+function switchTab(view,btn){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerText=msg;
+  t.classList.add('show');clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function exportData(){
+  state.notes=document.getElementById('codex').value;
+  const a=document.createElement('a');
+  a.href='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(state,null,2));
+  a.download='QuestLog_Save_V3.2.json';a.click();
+}
+
+function importData(input){
+  const file=input.files[0];if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      if(confirm('Overwrite current save?')){
+        const parsed=JSON.parse(e.target.result);
+        state=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE)),parsed);
+        state.player=Object.assign(JSON.parse(JSON.stringify(DEFAULT_STATE.player)),parsed.player||{});
+        document.getElementById('codex').value=state.notes||'';
+        saveGame();updateUI();showToast('✅ Save imported!');
+      }
+    }catch(err){showToast('❌ Invalid save file.');}
+  };
+  reader.readAsText(file);
+}
+
+function resetGame(){
+  if(confirm('RESET EVERYTHING? This cannot be undone.')){
+    state=JSON.parse(JSON.stringify(DEFAULT_STATE));
+    document.getElementById('codex').value='';
+    saveGame();updateUI();showToast('🔄 Game reset!');
+  }
+}
+
+let saveTimer=null;
+document.getElementById('codex').addEventListener('input',()=>{
+  document.getElementById('save-indicator').innerText='saving...';
+  document.getElementById('save-indicator').style.color='var(--gold)';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{saveGame();document.getElementById('save-indicator').innerText='✓ saved';document.getElementById('save-indicator').style.color='var(--accent)';},1000);
+});
+
+document.addEventListener('DOMContentLoaded',()=>{loadGame();requestNotificationPermission();startReminderSystem();});
+</script>
+</body>
+</html>
